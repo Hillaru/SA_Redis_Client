@@ -1,0 +1,19 @@
+FROM erlang:24-alpine
+RUN mkdir /server
+WORKDIR /server
+
+COPY src src/
+COPY rebar.config .
+RUN rebar3 release
+
+FROM alpine
+
+RUN apk add --no-cache openssl && \
+    apk add --no-cache ncurses-libs && \
+     apk add --no-cache libstdc++ && \
+      apk add --no-cache libgcc
+
+COPY --from=0 /server/_build/default/rel/cowboy_server /cowboy_server
+EXPOSE 8081
+
+CMD ["/cowboy_server/bin/cowboy_server", "foreground"]
